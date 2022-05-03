@@ -29,13 +29,21 @@ window.onload = async () => {//use of fat arrow functions
   // TODO load textures
   const enemyImg = await loadTexture('assets/enemyShip.png')
   const heroImg = await loadTexture('assets/player.png');
+  const laserImg = await loadTexture("assets/laserRed.png");
   // TODO draw black background
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0,0, canvas.width, canvas.height);
+  initGame();
+  let gameLoopId = setInterval(() => {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0, canvas.width, canvas.height);
+    drawGameObjects(ctx);
+  })
+  // ctx.fillStyle = 'black';
+  // ctx.fillRect(0,0, canvas.width, canvas.height);
   // TODO draw hero
-  ctx.drawImage(heroImg, canvas.width/2 - 45,canvas.height - canvas.height/4)
+  // ctx.drawImage(heroImg, canvas.width/2 - 45,canvas.height - canvas.height/4)
   // TODO uncomment the next line when you add enemies to screen
-  createEnemies(ctx, canvas, enemyImg);
+  // createEnemies(ctx, canvas, enemyImg);
 }
 
 class GameObject{
@@ -105,6 +113,62 @@ window.addEventListener("keyup", (evt) => {
   }
 });
 
+class EventEmitter {
+  constructor() {
+    this.listeners = {};
+  }
+
+  on(message, listener) {
+    if (!this.listeners[message]) {
+      this.listeners[message] = [];
+    }
+    this.listeners[message].push(listener);
+  }
+
+  emit(message, payload = null) {
+    if (this.listeners[message]) {
+      this.listeners[message].forEach((l) => l(message, payload));
+    }
+  }
+}
+
+const Messages = {
+  KEY_EVENT_UP: "KEY_EVENT_UP",
+  KEY_EVENT_DOWN: "KEY_EVENT_DOWN",
+  KEY_EVENT_LEFT: "KEY_EVENT_LEFT",
+  KEY_EVENT_RIGHT: "KEY_EVENT_RIGHT",
+};
+
+let heroImg, 
+    enemyImg, 
+    laserImg,
+    canvas, ctx, 
+    gameObjects = [], 
+    hero, 
+    eventEmitter = new EventEmitter();
+
+
+function initGame() {
+  gameObjects = [];
+  createEnemies();
+  createHero();
+
+  eventEmitter.on(Messages.KEY_EVENT_UP, () => {
+    hero.y -=5 ;
+  })
+
+  eventEmitter.on(Messages.KEY_EVENT_DOWN, () => {
+    hero.y += 5;
+  });
+
+  eventEmitter.on(Messages.KEY_EVENT_LEFT, () => {
+    hero.x -= 5;
+  });
+
+  eventEmitter.on(Messages.KEY_EVENT_RIGHT, () => {
+    hero.x += 5;
+  });
+}
 
 
 
