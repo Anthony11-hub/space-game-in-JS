@@ -37,3 +37,81 @@ window.onload = async () => {//use of fat arrow functions
   // TODO uncomment the next line when you add enemies to screen
   createEnemies(ctx, canvas, enemyImg);
 }
+
+class GameObject{
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.dead = false;
+    this.type = "";
+    this.width = 0;
+    this.height = 0;
+    this.img = undefined;
+  }
+  draw(ctx){
+    ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+  }
+}
+
+class Hero extends GameObject{
+  constructor(x,y){
+    super(x,y, 'Hero');
+  }
+}
+
+class Enemy extends GameObject{
+  constructor(x,y){
+    super(x,y);
+    (this.width = 98), (this.height)
+      this.type = "Enemy";
+      let id = setInterval(() => {
+        if(this.y < canvas.height - this.height){
+          this.y += 5;
+        }else{
+          console.log('Stopped at', this.y)
+          clearInterval(id)
+        }
+      }, 300)
+  }
+}
+
+let onKeyDown = function (e){
+  console.log(e.keycode);
+  switch (e.keycode){
+    case 37:
+    case 39:
+    case 38:
+    case 40:
+    case 42:
+    case 32:
+      e.preventDefault();
+      break;
+    default:
+      break;
+  }
+};
+
+window.addEventListener('keydown', onKeyDown);
+
+window.addEventListener("keyup", (evt) => {
+  if (evt.key === "ArrowUp") {
+    eventEmitter.emit(Messages.KEY_EVENT_UP);
+  } else if (evt.key === "ArrowDown") {
+    eventEmitter.emit(Messages.KEY_EVENT_DOWN);
+  } else if (evt.key === "ArrowLeft") {
+    eventEmitter.emit(Messages.KEY_EVENT_LEFT);
+  } else if (evt.key === "ArrowRight") {
+    eventEmitter.emit(Messages.KEY_EVENT_RIGHT);
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
