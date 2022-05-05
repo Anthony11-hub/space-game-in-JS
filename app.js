@@ -22,7 +22,7 @@ class GameObject{
     this.x = x;
     this.y = y;
     this.dead = false;
-    this.type = "";
+    this.type = '';
     this.width = 0;
     this.height = 0;
     this.img = undefined;
