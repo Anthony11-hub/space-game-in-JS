@@ -31,6 +31,14 @@ class GameObject {
 	draw(ctx) {
 		ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
 	}
+  rectFromGameObject() {
+    return {
+      top: this.y,
+      left: this.x,
+      bottom: this.y + this.height,
+      right: this.x + this.width,
+    };
+  }
 }
 
 
@@ -58,7 +66,14 @@ class Enemy extends GameObject {
 		}, 300);
 	}
 }
-
+function intersectRect(r1, r2) {
+  return !(
+    r2.left > r1.right ||
+    r2.right < r1.left ||
+    r2.top > r1.bottom ||
+    r2.bottom < r1.top
+  );
+}
 
 function loadTexture(path) {
   return new Promise((resolve) => {
@@ -76,6 +91,9 @@ const Messages = {
   KEY_EVENT_DOWN: "KEY_EVENT_DOWN",
   KEY_EVENT_LEFT: "KEY_EVENT_LEFT",
   KEY_EVENT_RIGHT: "KEY_EVENT_RIGHT",
+  KEY_EVENT_SPACE: "KEY_EVENT_SPACE",
+  COLLISION_ENEMY_LASER: "COLLISION_ENEMY_LASER",
+  COLLISION_ENEMY_HERO: "COLLISION_ENEMY_HERO",
 };
 
 let heroImg, 
