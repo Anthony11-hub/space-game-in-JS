@@ -66,6 +66,15 @@ class Hero extends GameObject {
   canFire(){
     return this.cooldown === 0;
   }
+  decrementLife() {
+		this.life--;
+		if (this.life === 0) {
+			this.dead = true;
+		}
+	}
+	incrementPoints() {
+		this.points += 100;
+	}
 }
 class Enemy extends GameObject {
 	constructor(x, y) {
@@ -184,6 +193,7 @@ window.addEventListener('keyup', (evt) => {
 		eventEmitter.emit(Messages.KEY_EVENT_RIGHT);
 	} else if(evt.keyCode === 32) {
     eventEmitter.emit(Messages.KEY_EVENT_SPACE);
+  };
 });
 
 function createEnemies() {
@@ -262,39 +272,4 @@ window.onload = async () => {
 		drawGameObjects(ctx);
 	}, 100);
 };
-
-// window.onload = async () => {//use of fat arrow functions
-//   canvas = document.getElementById('canvas')
-//   ctx = canvas.getContext('2d')
-//   // TODO load textures
-//   const enemyImg = await loadTexture('assets/enemyShip.png')
-//   const heroImg = await loadTexture('assets/player.png');
-//   const laserImg = await loadTexture("assets/laserRed.png");
-//   // TODO draw black background
-//   initGame();
-//   let gameLoopId = setInterval(() => {
-//     ctx.clearRect(0,0, canvas.width, canvas.height);
-//     ctx.fillStyle = "black";
-//     ctx.fillRect(0,0, canvas.width, canvas.height);
-//     drawGameObjects(ctx);
-//   }, 100)
-//   // ctx.fillStyle = 'black';
-//   // ctx.fillRect(0,0, canvas.width, canvas.height);
-//   // TODO draw hero
-//   // ctx.drawImage(heroImg, canvas.width/2 - 45,canvas.height - canvas.height/4)
-//   // TODO uncomment the next line when you add enemies to screen
-//   // createEnemies(ctx, canvas, enemyImg);
-// };
-
-// adding key-event handlers, preventing the default key 
-
-
-
-
-
-
-
-
-
-
 
