@@ -49,7 +49,23 @@ class Hero extends GameObject {
 		(this.width = 99), (this.height = 75);
 		this.type = 'Hero';
 		this.speed = { x: 0, y: 0 };
+    this.cooldown = 500;
 	}
+  fire(){
+    gameObjects.push(new Laser(this.x + 45, this.y - 10));
+    this.cooldown = 500;
+
+    let id = setInterval(() => {
+      if(this.cooldown > 0){
+        this.cooldown -= 100;
+      }else{
+        clearInterval(id);
+      }
+    }, 200);
+  }
+  canFire(){
+    return this.cooldown === 0;
+  }
 }
 class Enemy extends GameObject {
 	constructor(x, y) {
@@ -66,6 +82,24 @@ class Enemy extends GameObject {
 		}, 300);
 	}
 }
+
+class Laser extends GameObject {
+  constructor(x, y) {
+    super(x,y);
+    (this.width = 9), (this.height = 33);
+    this.type = 'Laser';
+    this.img = laserImg;
+    let id = setInterval(() => {
+      if (this.y > 0) {
+        this.y -= 15;
+      } else {
+        this.dead = true;
+        clearInterval(id);
+      }
+    }, 100)
+  }
+}
+
 function intersectRect(r1, r2) {
   return !(
     r2.left > r1.right ||
@@ -74,6 +108,24 @@ function intersectRect(r1, r2) {
     r2.bottom < r1.top
   );
 }
+
+function updateGameObjects() {
+  const enemies = gameObjects.filter(go => go.type === 'Enemy');
+  const lasers = gameObjects.filter((go) => go.type === "Laser");
+// laser hit something
+  lasers.forEach((l) => {
+    enemies.forEach((m) => {
+      if (intersectRect(l.rectFromGameObject(), m.rectFromGameObject())) {
+      eventEmitter.emit(Messages.COLLISION_ENEMY_LASER, {
+        first: l,
+        second: m,
+      });
+    }
+   });
+});
+
+  gameObjects = gameObjects.filter(go => !go.dead);
+}  
 
 function loadTexture(path) {
   return new Promise((resolve) => {
@@ -130,7 +182,8 @@ window.addEventListener('keyup', (evt) => {
 		eventEmitter.emit(Messages.KEY_EVENT_LEFT);
 	} else if (evt.key === 'ArrowRight') {
 		eventEmitter.emit(Messages.KEY_EVENT_RIGHT);
-	}
+	} else if(evt.keyCode === 32) {
+    eventEmitter.emit(Messages.KEY_EVENT_SPACE);
 });
 
 function createEnemies() {
@@ -181,6 +234,16 @@ function initGame() {
 
   eventEmitter.on(Messages.KEY_EVENT_RIGHT, () => {
     hero.x += 5;
+  });
+  eventEmitter.on(Messages.KEY_EVENT_SPACE, () => {
+		if (hero.canFire()) {
+			hero.fire();
+		}
+		// console.log('cant fire - cooling down')
+	});
+  eventEmitter.on(Messages.COLLISION_ENEMY_LASER, (_, { first, second }) => {
+    first.dead = true;
+    second.dead = true;
   });
 }
 
