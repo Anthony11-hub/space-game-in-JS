@@ -31,7 +31,7 @@ class GameObject {
 	draw(ctx) {
 		ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
 	}
-  rectFromGameObject() {
+  rectFromGameObject() {//a way to get a rectangle representation of agame object
     return {
       top: this.y,
       left: this.x,
@@ -44,40 +44,42 @@ class GameObject {
 
 // applying inheritance game design pattern
 class Hero extends GameObject {
-	constructor(x, y) {
-		super(x, y);
-		(this.width = 99), (this.height = 75);
-		this.type = 'Hero';
-		this.speed = { x: 0, y: 0 };
-    this.cooldown = 500;
+  constructor(x, y) {
+    super(x, y);
+    (this.width = 99), (this.height = 75);
+    this.type = "Hero";
+    this.speed = { x: 0, y: 0 };
+    this.cooldown = 0;
     this.life = 3;
     this.points = 0;
-	}
-  fire(){
+  }
+  fire() {
     gameObjects.push(new Laser(this.x + 45, this.y - 10));
     this.cooldown = 500;
-
+ 
     let id = setInterval(() => {
-      if(this.cooldown > 0){
+      if (this.cooldown > 0) {
         this.cooldown -= 100;
-      }else{
+      } else {
         clearInterval(id);
       }
     }, 200);
   }
-  canFire(){
+  canFire() {
     return this.cooldown === 0;
   }
   decrementLife() {
-		this.life--;
-		if (this.life === 0) {
-			this.dead = true;
-		}
-	}
-	incrementPoints() {
-		this.points += 100;
-	}
-}
+    this.life--;
+    if (this.life === 0) {
+      this.dead = true;
+    }
+  }
+  incrementPoints() {
+    this.points += 100;
+  }
+ }
+
+
 class Enemy extends GameObject {
 	constructor(x, y) {
 		super(x, y);
@@ -111,7 +113,7 @@ class Laser extends GameObject {
   }
 }
 
-function intersectRect(r1, r2) {
+function intersectRect(r1, r2) {//a comparison function
   return !(
     r2.left > r1.right ||
     r2.right < r1.left ||
@@ -276,12 +278,14 @@ function initGame() {
   eventEmitter.on(Messages.KEY_EVENT_RIGHT, () => {
     hero.x += 5;
   });
+
   eventEmitter.on(Messages.KEY_EVENT_SPACE, () => {
 		if (hero.canFire()) {
 			hero.fire();
 		}
 		// console.log('cant fire - cooling down')
 	});
+
   eventEmitter.on(Messages.COLLISION_ENEMY_LASER, (_, { first, second }) => {
     first.dead = true;
     second.dead = true;
