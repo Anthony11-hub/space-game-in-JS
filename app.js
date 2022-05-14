@@ -15,6 +15,9 @@ class EventEmitter {
 			this.listeners[message].forEach((l) => l(message, payload));
 		}
 	}
+  clear() {
+		this.listeners = {};
+	}
 }
 
 class GameObject {
@@ -122,23 +125,23 @@ function intersectRect(r1, r2) {//a comparison function
   );
 }
 
-function updateGameObjects() {
-  const enemies = gameObjects.filter(go => go.type === 'Enemy');
-  const lasers = gameObjects.filter((go) => go.type === "Laser");
-// laser hit something
-  lasers.forEach((l) => {
-    enemies.forEach((m) => {
-      if (intersectRect(l.rectFromGameObject(), m.rectFromGameObject())) {
-      eventEmitter.emit(Messages.COLLISION_ENEMY_LASER, {
-        first: l,
-        second: m,
-      });
-    }
-   });
-});
+// function updateGameObjects() {
+//   const enemies = gameObjects.filter(go => go.type === 'Enemy');
+//   const lasers = gameObjects.filter((go) => go.type === "Laser");
+// // laser hit something
+//   lasers.forEach((l) => {
+//     enemies.forEach((m) => {
+//       if (intersectRect(l.rectFromGameObject(), m.rectFromGameObject())) {
+//       eventEmitter.emit(Messages.COLLISION_ENEMY_LASER, {
+//         first: l,
+//         second: m,
+//       });
+//     }
+//    });
+// });
 
-  gameObjects = gameObjects.filter(go => !go.dead);
-}  
+//   gameObjects = gameObjects.filter(go => !go.dead);
+// }  
 
 function loadTexture(path) {
   return new Promise((resolve) => {
@@ -159,6 +162,9 @@ const Messages = {
   KEY_EVENT_SPACE: "KEY_EVENT_SPACE",
   COLLISION_ENEMY_LASER: "COLLISION_ENEMY_LASER",
   COLLISION_ENEMY_HERO: "COLLISION_ENEMY_HERO",
+  GAME_END_LOSS: "GAME_END_LOSS",
+  GAME_END_WIN: "GAME_END_WIN",
+  KEY_EVENT_ENTER: "KEY_EVENT_ENTER",//restart message
 };
 
 let heroImg, 
@@ -199,6 +205,7 @@ window.addEventListener('keyup', (evt) => {
 		eventEmitter.emit(Messages.KEY_EVENT_RIGHT);
 	} else if(evt.keyCode === 32) {
     eventEmitter.emit(Messages.KEY_EVENT_SPACE);
+    //code that restarts the game
   } else if (evt.key === 'Enter') {
 		eventEmitter.emit(Messages.KEY_EVENT_ENTER);
 	}
@@ -229,30 +236,30 @@ function createHero() {
   gameObjects.push(hero);
 }
 
-// function updateGameObjects() {
-// 	const enemies = gameObjects.filter((go) => go.type === 'Enemy');
-// 	const lasers = gameObjects.filter((go) => go.type === 'Laser');
+function updateGameObjects() {
+	const enemies = gameObjects.filter((go) => go.type === 'Enemy');
+	const lasers = gameObjects.filter((go) => go.type === 'Laser');
 
-// 	enemies.forEach((enemy) => {
-// 		const heroRect = hero.rectFromGameObject();
-// 		if (intersectRect(heroRect, enemy.rectFromGameObject())) {
-// 			eventEmitter.emit(Messages.COLLISION_ENEMY_HERO, { enemy });
-// 		}
-// 	});
+	enemies.forEach((enemy) => {
+		const heroRect = hero.rectFromGameObject();
+		if (intersectRect(heroRect, enemy.rectFromGameObject())) {
+			eventEmitter.emit(Messages.COLLISION_ENEMY_HERO, { enemy });
+		}
+	});
 
-// 	lasers.forEach((l) => {
-// 		enemies.forEach((m) => {
-// 			if (intersectRect(l.rectFromGameObject(), m.rectFromGameObject())) {
-// 				eventEmitter.emit(Messages.COLLISION_ENEMY_LASER, {
-// 					first: l,
-// 					second: m,
-// 				});
-// 			}
-// 		});
-// 	});
+	lasers.forEach((l) => {
+		enemies.forEach((m) => {
+			if (intersectRect(l.rectFromGameObject(), m.rectFromGameObject())) {
+				eventEmitter.emit(Messages.COLLISION_ENEMY_LASER, {
+					first: l,
+					second: m,
+				});
+			}
+		});
+	});
 
-// 	gameObjects = gameObjects.filter((go) => !go.dead);
-// }
+	gameObjects = gameObjects.filter((go) => !go.dead);
+}
 
 function drawGameObjects(ctx) {
 	gameObjects.forEach((go) => go.draw(ctx));
@@ -291,29 +298,32 @@ function initGame() {
     second.dead = true;
     hero.incrementPoints();
 
-    // if(isEnemiesDead()){
-    //   eventEmitter.emit(Messages.GAME_END_WITH);
-    // }
+    if(isEnemiesDead()){
+      eventEmitter.emit(Messages.GAME_END_WITH);
+    }
   });
 
   eventEmitter.on(Messages.COLLISION_ENEMY_HERO, (_, { enemy }) => {
 		enemy.dead = true;
 		hero.decrementLife();
-		// if (isHeroDead()) {
-		// 	eventEmitter.emit(Messages.GAME_END_LOSS);
-		// 	return; // loss before victory
-		// }
-		// if (isEnemiesDead()) {
-		// 	eventEmitter.emit(Messages.GAME_END_WIN);
-		// }
+		if (isHeroDead()) {
+			eventEmitter.emit(Messages.GAME_END_LOSS);
+			return; // loss before victory
+		}
+		if (isEnemiesDead()) {
+			eventEmitter.emit(Messages.GAME_END_WIN);
+		}
 	});
 
-	// eventEmitter.on(Messages.GAME_END_WIN, () => {
-	// 	endGame(true);
-	// });
-	// eventEmitter.on(Messages.GAME_END_LOSS, () => {
-	// 	endGame(false);
-	// });
+	eventEmitter.on(Messages.GAME_END_WIN, () => {
+		endGame(true);
+	});
+	eventEmitter.on(Messages.GAME_END_LOSS, () => {
+		endGame(false);
+	});
+  eventEmitter.on(Messages.KEY_EVENT_ENTER, () => {
+    resetGame();
+  });
 }
 
 
@@ -339,54 +349,61 @@ function drawText(message, x, y) {
 	ctx.fillText(message, x, y);
 }
 
-// function displayMessage(message, color = 'red') {
-// 	ctx.font = '30px Arial';
-// 	ctx.fillStyle = color;
-// 	ctx.textAlign = 'center';
-// 	ctx.fillText(message, canvas.width / 2, canvas.height / 2);
-// }
+function displayMessage(message, color = "red") {
+  ctx.font = "30px Arial";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+}
 
-// function isHeroDead() {
-// 	return hero.life <= 0;
-// }
 
-// function isEnemiesDead() {
-// 	const enemies = gameObjects.filter((go) => go.type === 'Enemy' && !go.dead);
-// 	return enemies.length === 0;
-// }
+//keeps track of the enemies or if hero ship has been destroyed
+function isHeroDead() {
+	return hero.life <= 0;
+}
+function isEnemiesDead() {
+	const enemies = gameObjects.filter((go) => go.type === 'Enemy' && !go.dead);
+	return enemies.length === 0;
+}
 
-// function endGame(win) {
-// 	clearInterval(gameLoopId);
+function endGame(win) {
+  clearInterval(gameLoopId);
 
-// 	// set delay so we are sure any paints have finished
-// 	setTimeout(() => {
-// 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-// 		ctx.fillStyle = 'black';
-// 		ctx.fillRect(0, 0, canvas.width, canvas.height);
-// 		if (win) {
-// 			displayMessage('Victory!!! Pew Pew... - Press [Enter] to start a new game Captain Pew Pew', 'green');
-// 		} else {
-// 			displayMessage('You died !!! Press [Enter] to start a new game Captain Pew Pew');
-// 		}
-// 	}, 200);
-// }
+  // set a delay so we are sure any paints have finished
+  setTimeout(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (win) {
+      displayMessage(
+        "Victory!!! Pew Pew... - Press [Enter] to start a new game Captain Pew Pew",
+        "green"
+      );
+    } else {
+      displayMessage(
+        "You died !!! Press [Enter] to start a new game Captain Pew Pew"
+      );
+    }
+  }, 200)  
+}
 
-// function resetGame() {
-// 	if (gameLoopId) {
-// 		clearInterval(gameLoopId);
-// 		eventEmitter.clear();
-// 		initGame();
-// 		gameLoopId = setInterval(() => {
-// 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-// 			ctx.fillStyle = 'black';
-// 			ctx.fillRect(0, 0, canvas.width, canvas.height);
-// 			drawPoints();
-// 			drawLife();
-// 			updateGameObjects();
-// 			drawGameObjects(ctx);
-// 		}, 100);
-// 	}
-// }
+//restart logic
+function resetGame() {
+  if (gameLoopId) {
+    clearInterval(gameLoopId);
+    eventEmitter.clear();
+    initGame();
+    gameLoopId = setInterval(() => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawPoints();
+      drawLife();
+      updateGameObjects();
+      drawGameObjects(ctx);
+    }, 100);
+  }
+}
 
 
 
